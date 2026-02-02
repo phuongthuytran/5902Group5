@@ -107,13 +107,18 @@ class SearchRunner:
 
         structured_results: List[SearchResult] = []
         for item in raw_results:
+            doc = url_docs_dict.get(item.get("link", ""), None)
+            # Add source_type metadata to identify web search results
+            if doc is not None:
+                doc.metadata["source_type"] = "web_search"
+                doc.metadata["title"] = item.get("title", "")
             structured_results.append(
                 SearchResult(
                     title=item.get("title", ""),
                     link=item.get("link", ""),
                     content=url_content_dict.get(item.get("link", ""), ""),
                     snippet=item.get("snippet", None),
-                    document=url_docs_dict.get(item.get("link", ""), None)
+                    document=doc
                 )
             )
 

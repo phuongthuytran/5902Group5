@@ -75,13 +75,21 @@ class SearchRagManager:
         results = self.search_runner.invoke(query)
         return results
 
-    def add_documents(self, documents: List[Document]) -> None:
+    def add_documents(
+        self,
+        documents: List[Document],
+        source_type: Optional[str] = None
+    ) -> None:
         if len(documents) == 0:
             logger.warning("No documents to add to the vectorstore.")
             return
         if not self.vectorstore:
             raise ValueError("VectorStore is not initialized.")
         documents = [doc for doc in documents if len(doc.page_content.strip()) > 0]
+        # Add source_type metadata if provided
+        if source_type:
+            for doc in documents:
+                doc.metadata["source_type"] = source_type
         if self.text_splitter:
             split_docs = self.text_splitter.split_documents(documents)
         else:
@@ -109,7 +117,10 @@ def format_docs(docs: List[Document]) -> str:
     for idx, doc in enumerate(docs):
         title = doc.metadata.get("title") if doc.metadata else None
         source = doc.metadata.get("source") if doc.metadata else None
+        source_type = doc.metadata.get("source_type") if doc.metadata else None
         header_parts = [f"[{idx}]"]
+        if source_type:
+            header_parts.append(f"({source_type})")
         if title:
             header_parts.append(title)
         if source:
