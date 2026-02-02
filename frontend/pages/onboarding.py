@@ -4,7 +4,7 @@ import time
 import asyncio
 from components.goal_refinement import render_goal_refinement
 from utils.pdf import extract_text_from_pdf
-from utils.state import save_persistent_state
+from utils.state import save_persistent_state, reset_to_add_goal
 from components.topbar import render_topbar
 
 
@@ -23,7 +23,8 @@ def _init_onboarding_state():
     st.session_state.setdefault("learner_occupation", "")
     st.session_state.setdefault("learner_information_text", "")
     st.session_state.setdefault("learner_information", "")
-    st.session_state.setdefault("to_add_goal", {"learning_goal": ""})
+    if "to_add_goal" not in st.session_state:
+        reset_to_add_goal()
     try:
         save_persistent_state()
     except Exception:

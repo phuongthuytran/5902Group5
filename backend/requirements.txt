@@ -4,6 +4,7 @@ langchain-community==1.0.0a1
 langchain-chroma==1.0.0
 langchain-huggingface==1.0.0
 langchain-docling
+langchain-openai
 
 
 duckduckgo-search

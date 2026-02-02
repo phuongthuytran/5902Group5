@@ -132,10 +132,11 @@ def render_existing_goals():
 def render_skill_gap_dialog():
     to_add_goal = st.session_state["to_add_goal"]
     st.write("Review and confirm your skill gaps.")
-    num_skills = len(to_add_goal["skill_gaps"])
-    num_gaps = sum(1 for skill in to_add_goal["skill_gaps"] if skill["is_gap"])
+    skill_gaps = to_add_goal.get("skill_gaps", [])
+    num_skills = len(skill_gaps)
+    num_gaps = sum(1 for skill in skill_gaps if skill["is_gap"])
     st.info(f"There are {num_skills} skills in total, with {num_gaps} skill gaps identified.")
-    if not to_add_goal["skill_gaps"]:
+    if not skill_gaps:
         st.session_state["if_show_skill_gap_results_in_dialog"] = True
         try:
             save_persistent_state()
@@ -149,11 +150,11 @@ def render_skill_gap_dialog():
         except Exception:
             pass
         render_identified_skill_gap(to_add_goal)
-        if_schedule_learning_path_ready = to_add_goal["skill_gaps"]
+        if_schedule_learning_path_ready = skill_gaps
         if st.button("Schedule Learning Path", type="primary", disabled=not if_schedule_learning_path_ready):
-            if to_add_goal["skill_gaps"] and not to_add_goal["learner_profile"]:
+            if skill_gaps and not to_add_goal.get("learner_profile"):
                 with st.spinner('Creating your profile ...'):
-                    learner_profile = create_learner_profile(to_add_goal["learning_goal"], st.session_state["learner_information"], to_add_goal["skill_gaps"])
+                    learner_profile = create_learner_profile(to_add_goal["learning_goal"], st.session_state["learner_information"], skill_gaps)
                     if learner_profile is None:
                         st.rerun()
                     to_add_goal["learner_profile"] = learner_profile

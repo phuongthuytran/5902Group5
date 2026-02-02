@@ -1,7 +1,6 @@
 
 from pydantic import BaseModel
 from typing import Optional
-from fastapi import File, UploadFile, Form
 
 
 class BaseRequest(BaseModel):
@@ -22,12 +21,6 @@ class LearningGoalRefinementRequest(BaseRequest):
     learner_information: str = ""
 
 
-class Goal2KnowledgePrestrionRequest(BaseRequest):
-
-    learning_goal: str = Form(...),
-    cv: UploadFile = File(...)
-
-
 class SkillGapIdentificationRequest(BaseRequest):
 
     learning_goal: str
@@ -40,14 +33,6 @@ class LearnerProfileInitializationWithInfoRequest(BaseRequest):
     learning_goal: str
     learner_information: str
     skill_gaps: str
-
-
-class LearnerProfileInitializationRequest(BaseRequest):
-
-    learning_goal: str
-    skill_requirements: str
-    skill_gaps: str
-    cv_path: str
 
 
 class LearnerProfileUpdateRequest(BaseRequest):

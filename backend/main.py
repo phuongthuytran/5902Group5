@@ -5,11 +5,12 @@ import uvicorn
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from io import BytesIO
+import pdfplumber
 from base.llm_factory import LLMFactory
 from base.searcher_factory import SearchRunner
 from base.search_rag import SearchRagManager
-from utils.preprocess import extract_text_from_pdf
 from fastapi.responses import JSONResponse
 from modules.skill_gap_identification import *
 from modules.adaptive_learner_modeling import *
@@ -35,7 +36,16 @@ def get_llm(model_provider: str | None = None, model_name: str | None = None, **
     model_name = model_name or app_config.llm.model_name
     return LLMFactory.create(model=model_name, model_provider=model_provider, **kwargs)
 
-UPLOAD_LOCATION = "/mnt/datadrive/tfwang/code/llm-mentor/data/cv/"
+@app.post("/extract-pdf-text")
+async def extract_pdf_text(file: UploadFile = File(...)):
+    """Extract text from an uploaded PDF file."""
+    try:
+        contents = await file.read()
+        with pdfplumber.open(BytesIO(contents)) as pdf:
+            text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+        return {"text": text}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 @app.get("/list-llm-models")
 async def list_llm_models():
@@ -98,32 +108,6 @@ async def identify_skill_gap_with_info(request: SkillGapIdentificationRequest):
         return JSONResponse(status_code=500, content={"detail": str(e)})
 
 
-@app.post("/identify-skill-gap")
-async def identify_skill_gap(goal: str = Form(...), cv: UploadFile = File(...), model_provider: Optional[str] = Form(None), model_name: Optional[str] = Form(None)):
-    llm = get_llm(model_provider, model_name)
-    mapper = SkillRequirementMapper(llm)
-    skill_gap_identifier = SkillGapIdentifier(llm)
-    try:
-        file_location = f"{UPLOAD_LOCATION}{cv.filename}"
-#         with open(file_location, "wb") as file_object:
-#             file_object.write(await cv.read())
-        with open(file_location, "wb") as file_object:
-            file_object.write(await cv.read())
-        # print(file_location)
-        cv_text = extract_text_from_pdf(file_location)  
-        skill_requirements = mapper.map_goal_to_skill({
-            "learning_goal": goal
-        })
-        skill_gaps = skill_gap_identifier.identify_skill_gap({
-            "learning_goal": goal,
-            "skill_requirements": skill_requirements,
-            "learner_information": cv_text
-        })
-        results = {**skill_gaps, **skill_requirements}
-        return results
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"detail": str(e)})
-
 @app.post("/create-learner-profile-with-info")
 async def create_learner_profile_with_info(request: LearnerProfileInitializationWithInfoRequest):
     llm = get_llm(request.model_provider, request.model_name)
@@ -143,26 +127,6 @@ async def create_learner_profile_with_info(request: LearnerProfileInitialization
                 skill_gaps = {"raw": skill_gaps}
         learner_profile = initialize_learner_profile_with_llm(
             llm, learning_goal, learner_information, skill_gaps
-        )
-        return {"learner_profile": learner_profile}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/create-learner-profile")
-async def create_learner_profile(request: LearnerProfileInitializationRequest):
-    llm = get_llm(request.model_provider, request.model_name)
-    file_location = f"{UPLOAD_LOCATION}{request.cv_path}"
-    learner_information = extract_text_from_pdf(file_location)
-    learning_goal = request.learning_goal
-    skill_gaps = request.skill_gaps
-    try:
-        if isinstance(skill_gaps, str):
-            try:
-                skill_gaps = ast.literal_eval(skill_gaps)
-            except Exception:
-                skill_gaps = {"raw": skill_gaps}
-        learner_profile = initialize_learner_profile_with_llm(
-            llm, learning_goal, {"raw": learner_information}, skill_gaps
         )
         return {"learner_profile": learner_profile}
     except Exception as e:

@@ -1,10 +1,6 @@
-import pdfplumber
+from utils.request_api import extract_pdf_text
 
 
 def extract_text_from_pdf(file):
-    """Extracts text from the uploaded PDF file."""
-    text = ""
-    with pdfplumber.open(file) as pdf:
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
-    return text
+    """Extracts text from the uploaded PDF file via the backend API."""
+    return extract_pdf_text(file)

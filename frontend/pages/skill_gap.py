@@ -21,21 +21,22 @@ def render_skill_gap():
         st.title("Skill Gap")
         st.write("Review and confirm your skill gaps.")
 
-        if not goal["skill_gaps"]:
+        skill_gaps = goal.get("skill_gaps", [])
+        if not skill_gaps:
             render_identifying_skill_gap(goal)
         else:
-            num_skills = len(goal["skill_gaps"])
-            num_gaps = sum(1 for skill in goal["skill_gaps"] if skill["is_gap"])
+            num_skills = len(skill_gaps)
+            num_gaps = sum(1 for skill in skill_gaps if skill["is_gap"])
             st.info(f"There are {num_skills} skills in total, with {num_gaps} skill gaps identified.")
             render_identified_skill_gap(goal)
-            
-            if_schedule_learning_path_ready = goal["skill_gaps"]
+
+            if_schedule_learning_path_ready = skill_gaps
             space_col, continue_button_col = st.columns([1, 0.27])
             with continue_button_col:
                 if st.button("Schedule Learning Path", type="primary", disabled=not if_schedule_learning_path_ready):
-                    if goal["skill_gaps"] and not goal["learner_profile"]:
+                    if skill_gaps and not goal.get("learner_profile"):
                         with st.spinner('Creating your profile ...'):
-                            learner_profile = create_learner_profile(goal["learning_goal"], st.session_state["learner_information"], goal["skill_gaps"])
+                            learner_profile = create_learner_profile(goal["learning_goal"], st.session_state["learner_information"], skill_gaps)
                             if learner_profile is None:
                                 st.rerun()
                             goal["learner_profile"] = learner_profile

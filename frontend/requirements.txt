@@ -11,5 +11,4 @@ markdown
 unidecode
 extra-streamlit-components==0.1.60
 deprecation==2.1.0
-pdfplumber
 httpx

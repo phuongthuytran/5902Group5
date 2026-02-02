@@ -42,6 +42,21 @@ def make_post_request(api_name, data, mock_data_path=None, timeout=500):
         st.write("Failed to fetch data. Error:", e)
         return {}
 
+def extract_pdf_text(file):
+    """Extract text from a PDF file using the backend API."""
+    backend_url = f"{backend_endpoint}extract-pdf-text"
+    try:
+        files = {"file": (file.name, file.getvalue(), "application/pdf")}
+        response = httpx.post(backend_url, files=files, timeout=60)
+        if response.status_code == 200:
+            return response.json().get("text", "")
+        else:
+            st.write("Failed to extract PDF text. Status code:", response.status_code)
+            return ""
+    except Exception as e:
+        st.write("Failed to extract PDF text. Error:", e)
+        return ""
+
 def get_available_models(backend_endpoint):
     backend_url = f"{backend_endpoint}list-llm-models"
     try:
