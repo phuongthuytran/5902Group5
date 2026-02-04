@@ -21,6 +21,9 @@ API_NAMES = {
     "draft_knowledge_points": "draft-knowledge-points",
     "integrate_learning_document": "integrate-learning-document",
     "generate_document_quizzes": "generate-document-quizzes",
+    "simulate_path_feedback": "simulate-path-feedback",
+    "refine_path": "refine-learning-path",
+    "iterative_refine_path": "iterative-refine-path",
 }
 
 
@@ -220,3 +223,39 @@ def integrate_learning_document(learner_profile, learning_path, learning_session
         return response.get("learning_document") if response else None
     else:
         return response.get("learning_document") if response else None
+
+def simulate_path_feedback(learner_profile, learning_path, llm_type="gpt4o", method_name="genmentor"):
+    data = {
+        "learner_profile": str(learner_profile),
+        "learning_path": str(learning_path),
+        "llm_type": str(llm_type),
+        "method_name": str(method_name),
+    }
+    response = make_post_request(API_NAMES["simulate_path_feedback"], data)
+    return response.get("feedback") if response else None
+
+def refine_learning_path_with_feedback(learning_path, feedback, llm_type="gpt4o", method_name="genmentor"):
+    data = {
+        "learning_path": str(learning_path),
+        "feedback": str(feedback),
+        "llm_type": str(llm_type),
+        "method_name": str(method_name),
+    }
+    response = make_post_request(API_NAMES["refine_path"], data)
+    return response.get("refined_learning_path") if response else None
+
+def iterative_refine_learning_path(learner_profile, learning_path, max_iterations=2, llm_type="gpt4o", method_name="genmentor"):
+    data = {
+        "learner_profile": str(learner_profile),
+        "learning_path": str(learning_path),
+        "max_iterations": max_iterations,
+        "llm_type": str(llm_type),
+        "method_name": str(method_name),
+    }
+    response = make_post_request(API_NAMES["iterative_refine_path"], data)
+    if response:
+        return {
+            "final_learning_path": response.get("final_learning_path"),
+            "iterations": response.get("iterations", [])
+        }
+    return None

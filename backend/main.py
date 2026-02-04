@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from modules.skill_gap_identification import *
 from modules.adaptive_learner_modeling import *
 from modules.personalized_resource_delivery import *
+from modules.personalized_resource_delivery.agents.learning_path_scheduler import refine_learning_path_with_llm
 from modules.ai_chatbot_tutor import chat_with_tutor_with_llm
 from api_schemas import *
 from config import load_config
@@ -322,6 +323,54 @@ async def simulate_content_feedback(request: LearningContentFeedbackRequest):
             learning_content = ast.literal_eval(learning_content)
         feedback = simulate_content_feedback_with_llm(llm, learner_profile, learning_content)
         return {"feedback": feedback}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/refine-learning-path")
+async def refine_learning_path(request: LearningPathRefinementRequest):
+    llm = get_llm(request.model_provider, request.model_name)
+    learning_path = request.learning_path
+    feedback = request.feedback
+    try:
+        if isinstance(learning_path, str) and learning_path.strip():
+            learning_path = ast.literal_eval(learning_path)
+        if isinstance(feedback, str) and feedback.strip():
+            feedback = ast.literal_eval(feedback)
+        refined_path = refine_learning_path_with_llm(llm, learning_path, feedback)
+        return {"refined_learning_path": refined_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/iterative-refine-path")
+async def iterative_refine_path(request: IterativeRefinementRequest):
+    llm = get_llm(request.model_provider, request.model_name)
+    learner_profile = request.learner_profile
+    learning_path = request.learning_path
+    max_iterations = min(request.max_iterations, 5)  # Cap at 5 iterations
+    try:
+        if isinstance(learner_profile, str) and learner_profile.strip():
+            learner_profile = ast.literal_eval(learner_profile)
+        if isinstance(learning_path, str) and learning_path.strip():
+            learning_path = ast.literal_eval(learning_path)
+
+        iterations = []
+        current_path = learning_path
+
+        for i in range(max_iterations):
+            # Simulate feedback for current path
+            feedback = simulate_path_feedback_with_llm(llm, learner_profile, current_path)
+            iterations.append({
+                "iteration": i + 1,
+                "feedback": feedback
+            })
+            # Refine path based on feedback
+            refined_result = refine_learning_path_with_llm(llm, current_path, feedback)
+            current_path = refined_result.get("learning_path", current_path)
+
+        return {
+            "final_learning_path": current_path,
+            "iterations": iterations
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -2,7 +2,13 @@ import time
 import math
 import streamlit as st
 from components.skill_info import render_skill_info
-from utils.request_api import schedule_learning_path, reschedule_learning_path
+from utils.request_api import (
+    schedule_learning_path,
+    reschedule_learning_path,
+    simulate_path_feedback,
+    refine_learning_path_with_feedback,
+    iterative_refine_learning_path,
+)
 from components.navigation import render_navigation
 from utils.state import save_persistent_state
 
@@ -39,6 +45,7 @@ def render_learning_path():
         my_bar.empty()
     else:
         render_overall_information(goal)
+        render_path_feedback_section(goal)
         render_learning_sessions(goal)
 
 
@@ -65,6 +72,124 @@ def render_overall_information(goal):
                 st.info("🚀 Keep going! You’re making great progress.")
         with st.expander("View Skill Details", expanded=False):
             render_skill_info(goal["learner_profile"])
+
+def render_path_feedback_section(goal):
+    goal_id = st.session_state["selected_goal_id"]
+    cache_key = f"feedback_{goal_id}"
+
+    with st.expander("AI Path Evaluation & Refinement", expanded=False):
+        st.info("Get AI-simulated learner feedback on your learning path and refine it before starting.")
+
+        col1, col2, col3 = st.columns([2, 2, 2])
+        with col1:
+            if st.button("Simulate Feedback", type="primary", use_container_width=True):
+                st.session_state["if_simulating_feedback"] = True
+                save_persistent_state()
+                st.rerun()
+
+        with col2:
+            if st.button("Refine Path", type="secondary", use_container_width=True,
+                        disabled=cache_key not in st.session_state.get("path_feedback_cache", {})):
+                st.session_state["if_refining_path"] = True
+                save_persistent_state()
+                st.rerun()
+
+        with col3:
+            iteration_count = st.selectbox("Iterations", options=[1, 2, 3, 4, 5], index=1, key="auto_refine_iterations")
+            if st.button("Auto-Refine", type="secondary", use_container_width=True):
+                with st.spinner(f'Auto-refining path ({iteration_count} iterations)...'):
+                    result = iterative_refine_learning_path(
+                        goal["learner_profile"],
+                        goal["learning_path"],
+                        max_iterations=iteration_count
+                    )
+                    if result and result.get("final_learning_path"):
+                        goal["learning_path"] = result["final_learning_path"]
+                        # Clear feedback cache after refinement
+                        if cache_key in st.session_state.get("path_feedback_cache", {}):
+                            del st.session_state["path_feedback_cache"][cache_key]
+                        save_persistent_state()
+                        st.toast(f"Path refined through {iteration_count} iterations!")
+                        # Display iteration history
+                        for iteration in result.get("iterations", []):
+                            st.write(f"**Iteration {iteration['iteration']}:**")
+                            feedback = iteration.get("feedback", {})
+                            if isinstance(feedback, dict):
+                                fb = feedback.get("feedback", {})
+                                st.write(f"- Progression: {fb.get('progression', 'N/A')}")
+                                st.write(f"- Engagement: {fb.get('engagement', 'N/A')}")
+                        st.rerun()
+                    else:
+                        st.error("Failed to auto-refine path.")
+
+        # Handle simulating feedback
+        if st.session_state.get("if_simulating_feedback"):
+            with st.spinner('Simulating learner feedback...'):
+                feedback = simulate_path_feedback(goal["learner_profile"], goal["learning_path"])
+                if feedback:
+                    if "path_feedback_cache" not in st.session_state:
+                        st.session_state["path_feedback_cache"] = {}
+                    st.session_state["path_feedback_cache"][cache_key] = feedback
+                    st.session_state["if_simulating_feedback"] = False
+                    save_persistent_state()
+                    st.toast("Feedback simulated successfully!")
+                    st.rerun()
+                else:
+                    st.session_state["if_simulating_feedback"] = False
+                    st.error("Failed to simulate feedback.")
+
+        # Handle refining path
+        if st.session_state.get("if_refining_path"):
+            cached_feedback = st.session_state.get("path_feedback_cache", {}).get(cache_key)
+            if cached_feedback:
+                with st.spinner('Refining learning path...'):
+                    refined_path = refine_learning_path_with_feedback(goal["learning_path"], cached_feedback)
+                    if refined_path:
+                        goal["learning_path"] = refined_path.get("learning_path", refined_path)
+                        # Clear feedback cache after refinement
+                        del st.session_state["path_feedback_cache"][cache_key]
+                        st.session_state["if_refining_path"] = False
+                        save_persistent_state()
+                        st.toast("Learning path refined successfully!")
+                        st.rerun()
+                    else:
+                        st.session_state["if_refining_path"] = False
+                        st.error("Failed to refine path.")
+            else:
+                st.session_state["if_refining_path"] = False
+
+        # Display cached feedback if available
+        cached_feedback = st.session_state.get("path_feedback_cache", {}).get(cache_key)
+        if cached_feedback:
+            st.write("---")
+            st.write("**Simulated Feedback:**")
+
+            feedback_data = cached_feedback.get("feedback", cached_feedback) if isinstance(cached_feedback, dict) else {}
+            suggestions_data = cached_feedback.get("suggestions", {}) if isinstance(cached_feedback, dict) else {}
+
+            # 3-column layout for feedback
+            fb_col1, fb_col2, fb_col3 = st.columns(3)
+            with fb_col1:
+                st.metric("Progression", "")
+                progression_fb = feedback_data.get("progression", "N/A") if isinstance(feedback_data, dict) else "N/A"
+                st.write(progression_fb)
+            with fb_col2:
+                st.metric("Engagement", "")
+                engagement_fb = feedback_data.get("engagement", "N/A") if isinstance(feedback_data, dict) else "N/A"
+                st.write(engagement_fb)
+            with fb_col3:
+                st.metric("Personalization", "")
+                personalization_fb = feedback_data.get("personalization", "N/A") if isinstance(feedback_data, dict) else "N/A"
+                st.write(personalization_fb)
+
+            # Display suggestions
+            if suggestions_data and isinstance(suggestions_data, dict):
+                st.write("---")
+                st.write("**Improvement Suggestions:**")
+                for key, suggestion in suggestions_data.items():
+                    if suggestion:
+                        st.info(f"**{key.title()}:** {suggestion}")
+
 
 def render_learning_sessions(goal):
     st.write("#### 📖 Learning Sessions")

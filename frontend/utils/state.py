@@ -29,7 +29,9 @@ PERSIST_KEYS = [
     "userId",
     "document_caches",
     "session_learning_times",
-    
+    "path_feedback_cache",
+    "if_simulating_feedback",
+    "if_refining_path",
 ]
 
 
@@ -132,6 +134,13 @@ def initialize_session_state():
 
     if "if_updating_learner_profile" not in st.session_state:
         st.session_state["if_updating_learner_profile"] = False
+
+    if "path_feedback_cache" not in st.session_state:
+        st.session_state["path_feedback_cache"] = {}
+    if "if_simulating_feedback" not in st.session_state:
+        st.session_state["if_simulating_feedback"] = False
+    if "if_refining_path" not in st.session_state:
+        st.session_state["if_refining_path"] = False
 
     for key in ["selected_goal_id", "selected_session_id", "selected_point_id"]:
         if key not in st.session_state:

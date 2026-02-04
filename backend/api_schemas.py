@@ -167,3 +167,16 @@ class LearningContentFeedbackRequest(BaseRequest):
 
     learner_profile: str
     learning_content: str
+
+
+class LearningPathRefinementRequest(BaseRequest):
+    """Request for refining a learning path based on feedback."""
+    learning_path: str
+    feedback: str
+
+
+class IterativeRefinementRequest(BaseRequest):
+    """Request for iterative refinement with feedback simulation."""
+    learner_profile: str
+    learning_path: str
+    max_iterations: int = 2

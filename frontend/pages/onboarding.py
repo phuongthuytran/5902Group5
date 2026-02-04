@@ -18,7 +18,7 @@ def on_refine_click():
 
 def _init_onboarding_state():
     """Ensure required session_state keys exist to avoid KeyErrors."""
-    st.session_state.setdefault("onboarding_card_index", 0)  # 0: goal, 1: info
+    st.session_state.setdefault("onboarding_card_index", 0)  # 0: info, 1: goal
     st.session_state.setdefault("if_refining_learning_goal", False)
     st.session_state.setdefault("learner_occupation", "")
     st.session_state.setdefault("learner_information_text", "")
@@ -83,20 +83,23 @@ def render_goal(goal):
         st.info("🚀 Please enter your role and specific learning goal. You can also refine it with AI suggestions.")
         learning_goal = st.text_area("* Enter your learning goal", value=goal["learning_goal"], label_visibility="visible", disabled=st.session_state["if_refining_learning_goal"])
         goal["learning_goal"] = learning_goal
-        button_col, hint_col, next_col = st.columns([3, 10, 3])
+        button_col, hint_col, _ = st.columns([3, 10, 3])
         render_goal_refinement(goal, button_col, hint_col)
         save_persistent_state()
         with hint_col:
             if st.session_state["if_refining_learning_goal"]:
                 st.write("**✨ Refining learning goal...**")
-        with next_col:
-            if st.button("Next", key="gm_nav_next", use_container_width=True, disabled=(idx == 1), type="primary"):
-                st.session_state["onboarding_card_index"] = min(1, idx + 1)
+        prev_col, space_col, continue_col = st.columns([3, 10, 3])
+        with prev_col:
+            if st.button("Previous", key="gm_nav_prev", use_container_width=True):
+                st.session_state["onboarding_card_index"] = max(0, idx - 1)
                 try:
                     save_persistent_state()
                 except Exception:
                     pass
                 st.rerun()
+        with continue_col:
+            render_continue_button(goal)
         
 
 
@@ -109,7 +112,7 @@ def render_information(goal):
 
         occupations = ["Software Engineer", "Data Scientist", "AI Researcher", "Product Manager", "UI/UX Designer", "Other"]
         try:
-            occupation_selectbox_index = occupations.index(st.session_state["learner_occupation"]) 
+            occupation_selectbox_index = occupations.index(st.session_state["learner_occupation"])
         except ValueError:
             occupation_selectbox_index = None
         ocp_left, ocp_right = st.columns([1, 1])
@@ -153,18 +156,16 @@ def render_information(goal):
             except Exception:
                 pass
         # st.divider()
-        arrow_left, space_col, continue_button_col = st.columns([3, 10, 3])
+        space_col, next_button_col = st.columns([13, 3])
         save_persistent_state()
-        with arrow_left:
-            if st.button("Previous", key="gm_nav_prev", use_container_width=True, disabled=(idx == 0)):
-                st.session_state["onboarding_card_index"] = max(0, idx - 1)
+        with next_button_col:
+            if st.button("Next", key="gm_nav_next", use_container_width=True, type="primary"):
+                st.session_state["onboarding_card_index"] = min(1, idx + 1)
                 try:
                     save_persistent_state()
                 except Exception:
                     pass
                 st.rerun()
-        with continue_button_col:
-            render_continue_button(goal)
 
 def render_continue_button(goal):
     if st.button("Save & Continue", type="primary"):
@@ -180,12 +181,12 @@ def render_continue_button(goal):
 
 
 def render_cards_with_nav(goal):
-    """Show either the Goal or Information section as a card with left/center/right nav buttons."""
+    """Show either the Information or Goal section as a card with nav buttons."""
     idx = st.session_state.get("onboarding_card_index", 0)
 
     if idx == 0:
-        render_goal(goal)
-    else:
         render_information(goal)
+    else:
+        render_goal(goal)
 
 render_onboard()
