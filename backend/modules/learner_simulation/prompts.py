@@ -3,7 +3,7 @@ You are tasked with creating a ground-truth learner profile based on the provide
 
 Generate a profile with the following components:
 - **Cognitive Status**: Mastered skills, in-progress skills, and knowledge gaps relevant to the learner’s goals.
-- **Learning Preferences**: Preferred content style (e.g., summaries or detailed explanations) and activity type (e.g., interactive exercises or reading).
+- **Learning Preferences**: Felder-Silverman Learning Style Model (FSLSM) dimension values between -1 and 1 for processing (active↔reflective), perception (sensing↔intuitive), input (visual↔verbal), and understanding (sequential↔global).
 - **Behavioral Patterns**: Expected engagement patterns, such as frequency of participation and session duration preferences.
 """
 
@@ -87,8 +87,11 @@ Follow these instructions for updating each component:
     - **Knowledge Gaps**: If the session reveals new areas where the learner lacks understanding, add these as knowledge gaps. Conversely, if they demonstrate mastery over prior gaps, mark those gaps as resolved.
 
 2. **Learning Preferences Update**:
-    - **Content Style**: Note any preferences indicated by learner interactions (e.g., spending more time on summaries vs. detailed explanations). Update the preferred content style to reflect this trend.
-    - **Activity Type**: Based on session data, adjust preferences for activity types (e.g., increase preference for interactive exercises if frequently engaged, or reading if passive learning is predominant).
+    - **FSLSM Dimensions**: Adjust the four FSLSM dimension values (-1 to 1) based on observed session behavior:
+      * fslsm_processing: shift toward -1 if the learner engages more in hands-on activities, or toward 1 if they prefer reading and observation.
+      * fslsm_perception: shift toward -1 if the learner gravitates to concrete examples, or toward 1 if they prefer abstract concepts and theories.
+      * fslsm_input: shift toward -1 if the learner spends more time on diagrams and videos, or toward 1 if they prefer text and lectures.
+      * fslsm_understanding: shift toward -1 if the learner follows sequential steps, or toward 1 if they seek big-picture overviews first.
 
 3. **Behavioral Patterns Update**:
     - **System Usage Frequency**: Adjust usage frequency based on recent session engagement (e.g., increase if the learner logs in more than usual). Consider external factors if there’s a recent decline or spike in engagement.
@@ -119,8 +122,13 @@ After each session, the profile should reflect a realistic progression that mimi
             ]
         }},
         "learning_preferences": {{
-            "content_style": "[Concise summaries or Detailed explanations]",
-            "activity_type": "[Reading-based learning or Actively query or Interactive exercises]",
+            "fslsm_dimensions": {{
+                "fslsm_processing": "float between -1 (active/hands-on) and 1 (reflective/observation)",
+                "fslsm_perception": "float between -1 (sensing/concrete) and 1 (intuitive/abstract)",
+                "fslsm_input": "float between -1 (visual/diagrams) and 1 (verbal/text)",
+                "fslsm_understanding": "float between -1 (sequential/step-by-step) and 1 (global/big-picture)"
+            }},
+            "additional_notes": "Other Preference Notes"
         }},
         "behavioral_patterns": {{
             "system_usage_frequency": "Average of 3 logins per week",

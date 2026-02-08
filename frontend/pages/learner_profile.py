@@ -84,11 +84,76 @@ def render_cognitive_status(goal):
 
 def render_learning_preferences(goal):
     learner_profile = goal["learner_profile"]
+    prefs = learner_profile['learning_preferences']
     st.markdown("#### 📚 Learning Preferences")
-    st.write(f"**Content Style:** {learner_profile['learning_preferences']['content_style']}")
-    st.write(f"**Preferred Activity Type:** {learner_profile['learning_preferences']['activity_type']}")
-    st.write(f"**Additional Notes:**")
-    st.info(learner_profile['learning_preferences']['additional_notes'])
+
+    # Display FSLSM dimensions
+    st.write("**FSLSM Learning Style Dimensions:**")
+    dims = prefs.get('fslsm_dimensions', {})
+    dimension_labels = [
+        ("fslsm_processing", "Active", "Reflective"),
+        ("fslsm_perception", "Sensing", "Intuitive"),
+        ("fslsm_input", "Visual", "Verbal"),
+        ("fslsm_understanding", "Sequential", "Global"),
+    ]
+    for key, left_label, right_label in dimension_labels:
+        value = dims.get(key, 0.0)
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col1:
+            st.markdown(f"**{left_label}**")
+        with col2:
+            st.slider(
+                label=key,
+                min_value=-1.0,
+                max_value=1.0,
+                value=float(value),
+                step=0.1,
+                disabled=True,
+                label_visibility="collapsed",
+                key=f"fslsm_{key}",
+            )
+        with col3:
+            st.markdown(f"**{right_label}**")
+
+    # Display computed summaries derived from FSLSM dimensions
+    perception = dims.get("fslsm_perception", 0.0)
+    understanding = dims.get("fslsm_understanding", 0.0)
+    processing = dims.get("fslsm_processing", 0.0)
+    inp = dims.get("fslsm_input", 0.0)
+
+    if perception <= -0.3:
+        cs_part1 = "Concrete examples and practical applications"
+    elif perception >= 0.3:
+        cs_part1 = "Conceptual and theoretical explanations"
+    else:
+        cs_part1 = "A mix of practical and conceptual content"
+    if understanding <= -0.3:
+        cs_part2 = "presented in step-by-step sequences"
+    elif understanding >= 0.3:
+        cs_part2 = "with big-picture overviews first"
+    else:
+        cs_part2 = "balancing sequential detail and big-picture context"
+    content_style = f"{cs_part1}, {cs_part2}"
+
+    if processing <= -0.3:
+        at_part1 = "Hands-on and interactive activities"
+    elif processing >= 0.3:
+        at_part1 = "Reading and observation-based learning"
+    else:
+        at_part1 = "A balance of interactive and reflective activities"
+    if inp <= -0.3:
+        at_part2 = "with diagrams, charts, and videos"
+    elif inp >= 0.3:
+        at_part2 = "with text-based materials and lectures"
+    else:
+        at_part2 = "using both visual and verbal materials"
+    activity_type = f"{at_part1}, {at_part2}"
+
+    st.write(f"**Content Style:** {content_style}")
+    st.write(f"**Preferred Activity Type:** {activity_type}")
+
+    st.write("**Additional Notes:**")
+    st.info(prefs.get('additional_notes', 'None'))
 
 def render_behavioral_patterns(goal):
     learner_profile = goal["learner_profile"]

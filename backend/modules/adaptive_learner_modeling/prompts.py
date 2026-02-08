@@ -19,8 +19,12 @@ learner_profile_output_format = """
         ]
     }},
     "learning_preferences": {{
-        "content_style": "[Concise summaries or Detailed explanations]",
-        "activity_type": "[Reading-based learning or Actively query or Interactive exercises]",
+        "fslsm_dimensions": {{
+            "fslsm_processing": "float between -1 (active/hands-on) and 1 (reflective/observation)",
+            "fslsm_perception": "float between -1 (sensing/concrete) and 1 (intuitive/abstract)",
+            "fslsm_input": "float between -1 (visual/diagrams) and 1 (verbal/text)",
+            "fslsm_understanding": "float between -1 (sequential/step-by-step) and 1 (global/big-picture)"
+        }},
         "additional_notes": "Other Preference Notes"
     }},
     "behavioral_patterns": {{
@@ -40,7 +44,12 @@ This profile will be used to personalize the learning experience and align it wi
 
 **Profile Components**:
 - Cognitive Status: Identify and outline the learner’s current knowledge level and skills mastered relevant to the target goal. Continuously update this status based on quiz scores, feedback, and interactions in each session, noting progress in mastery for each required skill.
-- Learning Preferences: Define the learner's preferred content styles (e.g., concise summaries or interactive exercises) and activity types (e.g., reading vs. querying). Adjust these dynamically based on their time engagement and satisfaction reports to enhance engagement and comprehension.
+- Learning Preferences: Characterize the learner using the Felder-Silverman Learning Style Model (FSLSM). Set four dimension values between -1 and 1:
+  * fslsm_processing: -1 (active/hands-on learner) to 1 (reflective/observation-based learner)
+  * fslsm_perception: -1 (sensing/concrete, prefers facts and examples) to 1 (intuitive/abstract, prefers theories and concepts)
+  * fslsm_input: -1 (visual learner, prefers diagrams and videos) to 1 (verbal learner, prefers text and lectures)
+  * fslsm_understanding: -1 (sequential, learns step-by-step) to 1 (global, learns via big-picture overviews)
+  Adjust these dimensions dynamically based on time engagement and satisfaction reports to enhance engagement and comprehension.
 - Behavioral Patterns: Track and update the learner’s usage frequency, engagement duration, and interaction consistency. For example, if the learner displays prolonged session times or irregular login patterns, include motivational prompts or adaptive adjustments to sustain engagement.
 """
 
@@ -56,7 +65,7 @@ Chain of Thoughts for Task A
 1. Interpret the learner's resume to identify relevant skills and knowledge.
 2. Determine the learner's learning goal and the required proficiency levels, must put entire learning goal into the profile.
 3. Assess the learner's cognitive status, including mastered skills and knowledge gaps (If the current proficiency level is equal or higher than the required proficiency level, must move the skill to the mastered list).
-4. Tailor the learning preferences to match the learner's content and activity preferences.
+4. Determine the learner's FSLSM dimension values based on their background, learning style cues, and stated preferences. Set each dimension between -1 and 1.
 5. Consider the learner's behavioral patterns to enhance engagement and motivation.
 
 Task B. Profile Update:
@@ -67,7 +76,7 @@ Task B. Profile Update:
 Chain of Thoughts for Task B
 1. Monitor the learner's progress through quiz scores, feedback, and session interactions.
 2. Update the cognitive status to reflect the learner's mastery of skills.
-3. Adjust learning preferences based on engagement and satisfaction reports.
+3. Adjust FSLSM dimension values based on engagement and satisfaction reports.
 4. Adapt behavioral patterns to maintain consistent engagement and motivation.
 
 """

@@ -49,8 +49,12 @@
             "additional_notes": "The learner has a strong foundation in communication and organizational skills."
         },
         "learning_preferences": {
-            "content_style": "Detailed explanations",
-            "activity_type": "Reading-based learning",
+            "fslsm_dimensions": {
+                "fslsm_processing": -0.5,
+                "fslsm_perception": -0.3,
+                "fslsm_input": -0.7,
+                "fslsm_understanding": 0.2
+            },
             "additional_notes": "The learner has a strong foundation in communication and organizational skills."
         },
         "behavioral_patterns": {
